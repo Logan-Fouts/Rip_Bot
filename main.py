@@ -49,14 +49,12 @@ def stop_recording():
         print("No recording is currently running.")
 
 def get_min_media_length() -> int:
-    return int(input("What is the minimum length of the content you are recording: "))
+    return int(input("What is the minimum length of the content you are recording in mins: ")) * 60
 
 def get_media_source() -> str:
-    _ = subprocess.run(
-    ['dbus-send', '--session', '--dest=org.freedesktop.DBus', '--type=method_call', '--print-reply',
-     '/org/freedesktop/DBus', 'org.freedesktop.DBus.ListNames'],
-    capture_output=True,
-    text=True)
+    command = 'dbus-send --session --dest=org.freedesktop.DBus --type=method_call --print-reply /org/freedesktop/DBus org.freedesktop.DBus.ListNames | grep "org.mpris.MediaPlayer2"'
+    subprocess.run(command, shell=True)
+
     return input("Copy and paste the media player inside the quotes that you are recording: ") 
     
 def check_valid_stop(min_media_length, start_time):
@@ -64,6 +62,7 @@ def check_valid_stop(min_media_length, start_time):
     while record_time < min_media_length: 
         while is_audio_playing():
             time.sleep(0.5)
+        print("Invalid stop time. Continuing...")
 
         end_time = time.perf_counter()
         record_time = end_time - start_time
