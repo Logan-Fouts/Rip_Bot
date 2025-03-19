@@ -1,10 +1,12 @@
 import pulsectl
+import pydbus
 import subprocess
 import time
 from inputimeout import inputimeout, TimeoutOccurred 
 
 
 recording_process = None
+bus = pydbus.SessionBus()
 
 def is_audio_playing() -> bool:
     """Check if audio is actively playing by checking for uncorked sink inputs."""
@@ -46,29 +48,61 @@ def stop_recording():
     else:
         print("No recording is currently running.")
 
+def get_min_media_length() -> int:
+    return int(input("What is the minimum length of the content you are recording: "))
+
+def get_media_source() -> str:
+    _ = subprocess.run(
+    ['dbus-send', '--session', '--dest=org.freedesktop.DBus', '--type=method_call', '--print-reply',
+     '/org/freedesktop/DBus', 'org.freedesktop.DBus.ListNames'],
+    capture_output=True,
+    text=True)
+    return input("Copy and paste the media player inside the quotes that you are recording: ") 
+    
+def check_valid_stop(min_media_length, start_time):
+    record_time = 0 
+    while record_time < min_media_length: 
+        while is_audio_playing():
+            time.sleep(0.5)
+
+        end_time = time.perf_counter()
+        record_time = end_time - start_time
+
+def anti_ayw(media_player_name):
+    player = bus.get(media_player_name, '/org/mpris/MediaPlayer2')
+    player.PlayPause()
+    time.sleep(2)
+    player.PlayPause()
+
+
 # Main script
+media_player_name = get_media_source()
+min_media_length = get_min_media_length()
 win_loc = get_win_loc()
 audio_device = get_audio_device()
 
 try:
     num_recordings = int(input("How many recordings do you want to make? "))
 except ValueError:
-    print("Invalid input. Defaulting to 1 recording.")
-    num_recordings = 1
+    print("Invalid input. Try Again.")
+    exit()
 
 i = 1
 while i <= num_recordings:
 
+    # Wait for audio before start recording
     while not is_audio_playing():
         time.sleep(0.5)
-
-    start_recording(audio_device, f"recording{i}.mkv", win_loc)
-
-    while is_audio_playing():
-        time.sleep(0.1)
-
-    stop_recording()
     
+    # Make sure are you watching doesn't show up 
+    anti_ayw(media_player_name)
+    
+    start_recording(audio_device, f"recording{i}.mkv", win_loc)
+    start_time = time.perf_counter()
+    # Make sure audio stop is at a valid time not in the middle of movie 
+    check_valid_stop(min_media_length, start_time)    
+    stop_recording()
+
     if i < num_recordings:
         try:
             user_input = inputimeout(
@@ -84,8 +118,5 @@ while i <= num_recordings:
     if user_input != 'yes':
         print("Exiting...")
         break
-        
-    while not is_audio_playing():
-        time.sleep(1)
 
     i += 1
