@@ -3,7 +3,10 @@ import pydbus
 import subprocess
 import time
 from inputimeout import inputimeout, TimeoutOccurred 
-
+from dotenv import load_dotenv
+import os
+ 
+load_dotenv() 
 
 recording_process = None
 bus = pydbus.SessionBus()
@@ -49,7 +52,7 @@ def stop_recording():
         print("No recording is currently running.")
 
 def get_min_media_length() -> int:
-    return int(input("What is the minimum length of the content you are recording in mins: ")) * 60
+    return float(input("What is the minimum length of the content you are recording in mins: ")) * 60
 
 def get_media_source() -> str:
     command = 'dbus-send --session --dest=org.freedesktop.DBus --type=method_call --print-reply /org/freedesktop/DBus org.freedesktop.DBus.ListNames | grep "org.mpris.MediaPlayer2"'
@@ -57,7 +60,7 @@ def get_media_source() -> str:
 
     return input("Copy and paste the media player inside the quotes that you are recording: ") 
     
-def check_valid_stop(min_media_length, start_time):
+def check_valid_stop(min_media_length, start_time) -> int:
     record_time = 0 
     while record_time < min_media_length: 
         while is_audio_playing():
@@ -67,12 +70,19 @@ def check_valid_stop(min_media_length, start_time):
         end_time = time.perf_counter()
         record_time = end_time - start_time
 
+    return record_time 
+    
 def anti_ayw(media_player_name):
     player = bus.get(media_player_name, '/org/mpris/MediaPlayer2')
     player.PlayPause()
     time.sleep(2)
     player.PlayPause()
-
+    
+def send_notification(message: str):
+    from discord_webhook import DiscordWebhook
+    WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
+    webhook = DiscordWebhook(url=WEBHOOK_URL, content=message)
+    response = webhook.execute()
 
 # Main script
 media_player_name = get_media_source()
@@ -95,26 +105,17 @@ while i <= num_recordings:
     
     # Make sure are you watching doesn't show up 
     anti_ayw(media_player_name)
-    
+
     start_recording(audio_device, f"recording{i}.mkv", win_loc)
     start_time = time.perf_counter()
     # Make sure audio stop is at a valid time not in the middle of movie 
-    check_valid_stop(min_media_length, start_time)    
+    record_time = check_valid_stop(min_media_length, start_time)    
     stop_recording()
+    
+    message = f"🏴‍☠️ARGH! Recording {i}/{num_recordings} just finished at {round((record_time / 60), 2)} mins." 
+    send_notification(message) 
 
-    if i < num_recordings:
-        try:
-            user_input = inputimeout(
-                prompt="Do you want to record another video? (yes/no): ",
-                timeout=5 # Wait for 5
-            ).strip().lower()
-        except TimeoutOccurred:
-            print("No input received. Continuing to the next recording...")
-            user_input = "yes" 
-    else:
-        user_input = "no" 
-  
-    if user_input != 'yes':
+    if i > num_recordings:
         print("Exiting...")
         break
 
