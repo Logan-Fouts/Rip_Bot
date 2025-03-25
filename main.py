@@ -1,10 +1,12 @@
 import pulsectl
 import pydbus
+import random
 import subprocess
 import time
 from inputimeout import inputimeout, TimeoutOccurred 
 from dotenv import load_dotenv
 import os
+import libclicker
  
 load_dotenv() 
 
@@ -72,11 +74,24 @@ def check_valid_stop(min_media_length, start_time) -> int:
 
     return record_time 
     
-def anti_ayw(media_player_name):
-    player = bus.get(media_player_name, '/org/mpris/MediaPlayer2')
-    player.PlayPause()
-    time.sleep(2)
-    player.PlayPause()
+def anti_ayw(win_loc):
+    print(win_loc)
+
+    win_loc = win_loc.strip().split(" ")
+
+    offset = win_loc[0].split(",")
+    x_offset, y_offset = int(offset[0]), int(offset[1])
+
+    dimensions = win_loc[1].split("x")
+    width, height = int(dimensions[0]), int(dimensions[1])
+
+    x = (width >> 1) + x_offset + 500 # + some more offset it seems weird its not centered
+    y = (height >> 1) + y_offset + random.randint(10, 100)
+    libclicker.move_mouse(x, y)
+    libclicker.click(x, y)
+    time.sleep(1)
+    libclicker.click(x, y)
+    
     
 def send_notification(message: str):
     from discord_webhook import DiscordWebhook
@@ -85,11 +100,10 @@ def send_notification(message: str):
     response = webhook.execute()
 
 # Main script
-media_player_name = get_media_source()
+
 min_media_length = get_min_media_length()
 win_loc = get_win_loc()
 audio_device = get_audio_device()
-
 try:
     num_recordings = int(input("How many recordings do you want to make? "))
 except ValueError:
@@ -104,7 +118,7 @@ while i <= num_recordings:
         time.sleep(0.5)
     
     # Make sure are you watching doesn't show up 
-    anti_ayw(media_player_name)
+    anti_ayw(win_loc)
 
     start_recording(audio_device, f"recording{i}.mkv", win_loc)
     start_time = time.perf_counter()
@@ -118,5 +132,7 @@ while i <= num_recordings:
     if i > num_recordings:
         print("Exiting...")
         break
+
+    time.sleep(5)
 
     i += 1
