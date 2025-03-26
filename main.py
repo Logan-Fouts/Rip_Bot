@@ -14,6 +14,7 @@ recording_process = None
 bus = pydbus.SessionBus()
 
 def start_recording(audio_device: str, output_file: str, win_loc: str):
+    global recording_process
     command = ['wf-recorder', '-D', '--audio=' + audio_device, '-f', output_file, '-g', win_loc]
     recording_process = subprocess.Popen(command)
     print(f"Recording started: {output_file}")
@@ -40,14 +41,15 @@ def check_valid_stop(min_media_length, start_time) -> int:
     record_time = 0 
     while record_time < min_media_length: 
         while is_audio_playing():
-            time.sleep(0.5)
+            time.sleep(1)
         print("Invalid stop time. Continuing...")
 
         record_time = time.perf_counter() - start_time
 
     return record_time 
     
-def anti_ayw(win_loc):
+def anti_ayw(win_loc, media_player_name):
+    player = bus.get(media_player_name, '/org/mpris/MediaPlayer2')
     win_loc = win_loc.strip().split(" ")
 
     offset = win_loc[0].split(",")
@@ -58,9 +60,11 @@ def anti_ayw(win_loc):
     x, y = (width >> 1) + x_offset + 500, (height >> 1) + y_offset + random.randint(10, 100)
 
     libclicker.move_mouse(x, y)
-    libclicker.click(x, y)
-    time.sleep(1)
-    libclicker.click(x, y)
+    # libclicker.click(x, y)
+    player.PlayPause()
+    time.sleep(2)
+    player.PlayPause()
+    # libclicker.click(x, y + 10)
     
 def send_notification(message: str):
     webhook = DiscordWebhook(url=os.getenv("DISCORD_WEBHOOK_URL"), content=message)
@@ -86,21 +90,28 @@ def get_media_source() -> str:
 
     return input("Copy and paste the media player inside the quotes that you are recording: ") 
     
-def get_num_recodings() -> int:
+def get_num_recordings() -> int:
     return int(input("How many recordings do you want to make? "))
 
+def get_ayw() -> bool:
+    response = input("Do you need anti 'are you watching'? (y/n): ").strip().lower()
+    return response == 'y'
+
 # Main script
+fight_ayw, media_player_name = get_ayw(), get_media_source()
 min_media_length, win_loc, audio_device, num_recordings = get_min_media_length(), get_win_loc(), get_audio_device(), get_num_recordings()
 
 for i in range(1, num_recordings + 1):
-    while not is_audio_playing(): # Wait for audio before start recording
+    while not is_audio_playing():
         time.sleep(0.5)
     
-    anti_ayw(win_loc)
+    if fight_ayw:
+        anti_ayw(win_loc, media_player_name)
+    time.sleep(2)
 
     start_recording(audio_device, f"recording{i}.mkv", win_loc)
     record_time = check_valid_stop(min_media_length, time.perf_counter())
     stop_recording()
     
     send_notification(f"🏴‍☠️ARGH! Recording {i}/{num_recordings} just finished at {round((record_time / 60), 2)} mins.") 
-    time.sleep(5)
+    time.sleep(6)
