@@ -59,7 +59,7 @@ def anti_ayw(win_loc, media_player_name):
     width, height = int(dimensions[0]), int(dimensions[1])
     x, y = (width >> 1) + x_offset + 500, (height >> 1) + y_offset + random.randint(10, 100)
 
-    libclicker.move_mouse(x, y)
+    libclicker.move_mouse(9000, 540 + random.randint(10, 100))
     # libclicker.click(x, y)
     player.PlayPause()
     time.sleep(2)
