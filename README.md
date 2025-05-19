@@ -1,4 +1,4 @@
-# Screen Pirate
+# Rip Bot
 
 Automated media recording tool with anti-"Are You Watching" protection for Linux.
 
