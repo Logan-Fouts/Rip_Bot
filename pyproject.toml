@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rip-bot"
+version = "0.1.0"
+authors = [{name="Logan Fouts", email="loganfouts@pm.me"}]
+description = "Automated media recording tool"
+readme = "README.md"
+requires-python = ">=3.6"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+]
+
+
+dependencies = [
+    "certifi==2025.4.26",
+    "charset-normalizer==3.4.2",
+    "dbus-python==1.4.0",
+    "discord-webhook==1.4.1",
+    "idna==3.10",
+    "pulsectl==24.12.0",
+    "pycairo==1.28.0",
+    "pydbus==0.6.0",
+    "PyGObject==3.52.3",
+    "python-dotenv==1.1.0",
+    "python-uinput==1.0.1",
+    "requests==2.32.3",
+    "urllib3==2.4.0",
+    "click>=8.0.0"
+]
+
+[project.scripts]
+rip-bot = "rip_bot.cli:main"
+
+[tool.setuptools]
+packages = ["rip_bot"]
+package-dir = {"" = "src"}
+py-modules = ["libclicker"]
