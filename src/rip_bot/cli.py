@@ -39,7 +39,8 @@ def check_valid_stop(min_media_length, start_time) -> int:
     while record_time < min_media_length: 
         while is_audio_playing():
             time.sleep(1)
-        click.echo("Invalid stop time. Continuing...")
+        if record_time < min_media_length:
+            click.echo("Invalid stop time. Continuing...")
         record_time = time.perf_counter() - start_time
     return record_time 
     
@@ -84,6 +85,7 @@ def get_num_recordings() -> int:
 @click.option('--win-loc', help="Window location coordinates")
 @click.option('--audio-device', help="Audio device name")
 @click.option('--num-recordings', type=int, help="Number of recordings to make")
+
 def main(ayw, media_player, min_length, win_loc, audio_device, num_recordings):
     """Automated media recording tool with anti-AYW protection"""
     
