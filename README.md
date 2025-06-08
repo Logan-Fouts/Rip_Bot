@@ -12,7 +12,7 @@ Automated media recording tool with anti-"Are You Watching" protection for Linux
 ```bash
 # Clone the repository
 git clone https://github.com/Logan-Fouts/Rip_Bot.git
-cd RIP_The_Tube
+cd Rip_Bot
 
 # Create and activate virtual environment
 python -m venv venv
@@ -22,8 +22,7 @@ source venv/bin/activate
 pip install -e .
 
 ## Usage
-```bash
-screen-pirate [OPTIONS]
+rip-bot [OPTIONS]
 
 Options:
   --ayw/--no-ayw      Enable anti-AYW protection
@@ -35,7 +34,7 @@ Options:
 ```
 
 ## Requirements
-- Linux with PulseAudio
+- Linux with PulseAudio and Wayland
 - wf-recorder
 - slurp
 - python-uinput
