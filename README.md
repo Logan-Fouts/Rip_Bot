@@ -1,6 +1,6 @@
 # Rip Bot
 
-Automated media recording tool with anti-"Are You Watching" protection for Linux.
+Automated media recording tool with anti-"Are You Watching" protection for Linux; specifically with wayland.
 
 ## Features
 - Automated screen recording triggered by audio playback
